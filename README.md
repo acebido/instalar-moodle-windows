@@ -31,7 +31,7 @@ MariaDB 11.4 y Moodle 5.2, **sin XAMPP**.
 
    ```powershell
    cd "$HOME\Documents\instalar-moodle-windows-main"   # la carpeta que has descomprimido
-   Set-ExecutionPolicy -Scope Process Bypass
+   Set-ExecutionPolicy -Scope Process Bypass -Force
    Get-ChildItem *.ps1 | Unblock-File
    ```
 
