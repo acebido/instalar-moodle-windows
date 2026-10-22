@@ -17,13 +17,17 @@
 $ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue'
 if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
   Write-Host 'Abre PowerShell como administrador y vuelve a ejecutar el script.' -ForegroundColor Red; exit 1 }
-if (Get-Service MariaDB -ErrorAction SilentlyContinue) { Write-Host 'Ya hay un servicio MariaDB instalado: no hago nada.' -ForegroundColor Yellow; exit 0 }
+# Si MariaDB ya está instalada no la vuelvo a instalar, pero sí rehago la base de
+# datos y el usuario: así este script sirve también para recuperar la contraseña.
+$YA = [bool](Get-Service MariaDB -ErrorAction SilentlyContinue)
+if ($YA) { Write-Host 'MariaDB ya está instalada: solo rehago la base de datos «moodle» y el usuario «moodleuser».' -ForegroundColor Yellow }
 
 function Clave($texto) {
   $s = Read-Host $texto -AsSecureString
   [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($s)) }
-$ROOTPW = Clave 'Contraseña NUEVA para root de MariaDB'
-$DBPW   = Clave 'Contraseña NUEVA para moodleuser (la usará Moodle)'
+if ($YA) { $ROOTPW = Clave 'Contraseña ACTUAL de root de MariaDB' }
+else     { $ROOTPW = Clave 'Contraseña NUEVA para root de MariaDB' }
+$DBPW   = Clave 'Contraseña NUEVA para moodleuser (la usará Moodle, apúntala)'
 if (-not $ROOTPW -or -not $DBPW) { Write-Host 'Las contraseñas no pueden estar vacías.' -ForegroundColor Red; exit 1 }
 
 $INST = 'C:\instaladores'; $HOME_ = 'C:\mariadb'; $DATA = 'C:\mariadb\data'
@@ -32,6 +36,7 @@ $INST = 'C:\instaladores'; $HOME_ = 'C:\mariadb'; $DATA = 'C:\mariadb\data'
 $BUSCA = @($INST, $PSScriptRoot, (Join-Path $HOME 'Downloads')) |
          Where-Object { $_ -and (Test-Path $_) } | Select-Object -Unique
 
+if (-not $YA) {
 Write-Host '== 1. MariaDB en C:\mariadb ==' -ForegroundColor Cyan
 if (-not (Test-Path "$HOME_\bin\mysqld.exe")) {
   # La carpeta descomprimida a veces trae otra carpeta igual dentro: busco la que tiene bin\mysqld.exe
@@ -79,11 +84,16 @@ if ((Get-Service MariaDB).Status -ne 'Running') {
   Write-Host '  MariaDB no arranca. Últimas líneas del log:' -ForegroundColor Red
   Get-Content "$DATA\mariadb-error.log" -Tail 12; exit 1 }
 Write-Host '  MariaDB en marcha'
+}
 
 Write-Host '== 5. Base de datos «moodle» y usuario «moodleuser» ==' -ForegroundColor Cyan
+# En SQL hay que escapar la barra invertida ANTES que la comilla, o se escapa dos veces.
+$PW = $DBPW -replace '\\','\\' -replace "'","''"
+# CREATE OR REPLACE, no IF NOT EXISTS: si el usuario ya existía, «IF NOT EXISTS» se
+# saltaba la orden en silencio y la contraseña seguía siendo la vieja.
 $sql = @"
 CREATE DATABASE IF NOT EXISTS moodle DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER IF NOT EXISTS 'moodleuser'@'localhost' IDENTIFIED BY '$($DBPW -replace "'","''")';
+CREATE OR REPLACE USER 'moodleuser'@'localhost' IDENTIFIED BY '$PW';
 GRANT SELECT,INSERT,UPDATE,DELETE,CREATE,CREATE TEMPORARY TABLES,DROP,INDEX,ALTER ON moodle.* TO 'moodleuser'@'localhost';
 FLUSH PRIVILEGES;
 "@
@@ -92,4 +102,8 @@ $sql | & "$HOME_\bin\mariadb.exe" -u root "-p$ROOTPW" 2>&1 | ForEach-Object { Wr
 Write-Host '== Comprobación ==' -ForegroundColor Cyan
 $r = & "$HOME_\bin\mariadb.exe" -u moodleuser "-p$DBPW" -N -e "SELECT @@version, @@character_set_database FROM dual" moodle 2>&1
 if ($LASTEXITCODE -eq 0) { Write-Host "  OK: moodleuser entra en la base de datos moodle ($r)" -ForegroundColor Green }
-else { Write-Host "  moodleuser no puede entrar: $r" -ForegroundColor Red }
+else {
+  Write-Host "  moodleuser NO puede entrar: $r" -ForegroundColor Red
+  Write-Host '  No sigas con el script 05: arregla esto primero.' -ForegroundColor Red
+  exit 1
+}
