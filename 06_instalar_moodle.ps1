@@ -1,6 +1,6 @@
 ﻿# =============================================================================
 #  06 · Instalar Moodle por consola (alternativa al instalador del navegador)
-#  Instalar Moodle 5.2 en Windows 11, pieza a pieza — Acebido · José Luis Díaz
+#  Instalar Moodle 5.3 en Windows 11, pieza a pieza — Acebido · José Luis Díaz
 # =============================================================================
 #  Qué hace: lo mismo que el instalador de http://localhost, pero con una sola
 #  orden: crea config.php y las ~500 tablas, y el usuario administrador.

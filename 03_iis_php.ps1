@@ -1,6 +1,6 @@
 ﻿# =============================================================================
 #  03 · Unir IIS y PHP (FastCGI)
-#  Instalar Moodle 5.2 en Windows 11, pieza a pieza — Acebido · José Luis Díaz
+#  Instalar Moodle 5.3 en Windows 11, pieza a pieza — Acebido · José Luis Díaz
 # =============================================================================
 #  Qué hace: le dice a IIS que existe php-cgi.exe, que le pase los ficheros .php,
 #  que index.php es la página por defecto y que admita subidas de 256 MB.

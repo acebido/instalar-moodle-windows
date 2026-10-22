@@ -1,6 +1,6 @@
 ﻿# =============================================================================
 #  04 · Instalar MariaDB 11.4 y crear la base de datos de Moodle
-#  Instalar Moodle 5.2 en Windows 11, pieza a pieza — Acebido · José Luis Díaz
+#  Instalar Moodle 5.3 en Windows 11, pieza a pieza — Acebido · José Luis Díaz
 # =============================================================================
 #  Qué hace:
 #   1. Pone MariaDB 11.4 en C:\mariadb (desde C:\instaladores: carpeta ya
@@ -40,15 +40,22 @@ if (-not $YA) {
 Write-Host '== 1. MariaDB en C:\mariadb ==' -ForegroundColor Cyan
 if (-not (Test-Path "$HOME_\bin\mysqld.exe")) {
   # La carpeta descomprimida a veces trae otra carpeta igual dentro: busco la que tiene bin\mysqld.exe
+  # Moodle 5.3 pide MariaDB 11.4 o superior: acepto 11.4, 11.8, 12.x...
+  function Vale-MariaDB([string]$nombre) {
+    if ($nombre -notmatch 'mariadb-(\d+)\.(\d+)') { return $false }
+    $may = [int]$Matches[1]; $men = [int]$Matches[2]
+    return ($may -gt 11 -or ($may -eq 11 -and $men -ge 4))
+  }
   $exe = Get-ChildItem $BUSCA -Recurse -Depth 3 -Filter mysqld.exe -ErrorAction SilentlyContinue |
-         Where-Object { $_.FullName -like '*mariadb-11.4*' } | Select-Object -First 1
-  $zip = Get-ChildItem $BUSCA -File -Filter 'mariadb-11.4*-winx64.zip' -ErrorAction SilentlyContinue | Select-Object -First 1
+         Where-Object { Vale-MariaDB $_.FullName } | Select-Object -First 1
+  $zip = Get-ChildItem $BUSCA -File -Filter 'mariadb-*-winx64.zip' -ErrorAction SilentlyContinue |
+         Where-Object { Vale-MariaDB $_.Name } | Sort-Object Name -Descending | Select-Object -First 1
   if ($exe) { Move-Item $exe.Directory.Parent.FullName $HOME_; Write-Host "  movida $($exe.Directory.Parent.FullName) -> C:\mariadb" }
   elseif ($zip) {
     Expand-Archive -Path $zip.FullName -DestinationPath 'C:\' -Force
-    Rename-Item (Get-ChildItem 'C:\' -Directory -Filter 'mariadb-11.4*-winx64' | Select-Object -First 1).FullName $HOME_
+    Rename-Item (Get-ChildItem 'C:\' -Directory -Filter 'mariadb-*-winx64' | Select-Object -First 1).FullName $HOME_
     Write-Host "  descomprimido $($zip.Name)" }
-  else { Write-Host '  No encuentro MariaDB 11.4 ni en C:\instaladores, ni junto a los scripts, ni en Descargas. Descarga el ZIP para Windows de mariadb.org/download.' -ForegroundColor Red; exit 1 }
+  else { Write-Host '  No encuentro MariaDB 11.4 o superior ni en C:\instaladores, ni junto a los scripts, ni en Descargas. Descarga el ZIP para Windows de mariadb.org/download.' -ForegroundColor Red; exit 1 }
 }
 
 Write-Host '== 2. Inicializar los datos y registrar el servicio ==' -ForegroundColor Cyan

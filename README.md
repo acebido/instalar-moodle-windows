@@ -1,8 +1,8 @@
-﻿# Instalar Moodle 5.2 en Windows 11 — scripts de PowerShell
+﻿# Instalar Moodle 5.3 en Windows 11 — scripts de PowerShell
 
-Scripts del vídeo **«Instalar Moodle 5.2 en Windows 11, pieza a pieza»** del canal de Acebido
+Scripts del vídeo **«Instalar Moodle 5.3 en Windows 11, pieza a pieza»** del canal de Acebido
 (José Luis Díaz). Hacen, en orden, lo mismo que se ve en el vídeo: IIS, PHP 8.3,
-MariaDB 11.4 y Moodle 5.2, **sin XAMPP**.
+MariaDB 11.4 y Moodle 5.3, **sin XAMPP**.
 
 > Son para un **ordenador de pruebas o de prácticas**. Para un servidor en internet hacen
 > falta además HTTPS, copias de seguridad y una configuración de seguridad más estricta.
@@ -20,7 +20,10 @@ MariaDB 11.4 y Moodle 5.2, **sin XAMPP**.
 | `vc_redist.x64.exe` | aka.ms/vs/17/release/vc_redist.x64.exe (el script 02 lo baja e instala solo) |
 | `php-8.3.x-nts-Win32-vs16-x64.zip` | downloads.php.net/~windows/releases/archives/ → el más nuevo `php-8.3.*-nts-Win32-vs16-x64.zip` |
 | `mariadb-11.4.x-winx64.zip` | mariadb.org/download → 11.4 (LTS) → Windows → **ZIP** |
-| `moodle-latest-502.zip` | download.moodle.org/releases/latest → el **.zip** de la 5.2 |
+| `moodle-latest-503.zip` | download.moodle.org/releases/latest → el **.zip** de la 5.3 |
+
+Moodle 5.3 pide **PHP 8.3 o superior** y **MariaDB 11.4 o superior**: las versiones de la
+tabla son el mínimo, no una preferencia. Con PHP 8.2 el instalador se para.
 
 ## Cómo se ejecutan
 

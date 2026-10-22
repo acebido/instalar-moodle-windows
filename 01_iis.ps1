@@ -1,6 +1,6 @@
 ﻿# =============================================================================
 #  01 · Activar IIS (el servidor web de Windows) con CGI
-#  Instalar Moodle 5.2 en Windows 11, pieza a pieza — Acebido · José Luis Díaz
+#  Instalar Moodle 5.3 en Windows 11, pieza a pieza — Acebido · José Luis Díaz
 # =============================================================================
 #  Qué hace: enciende IIS, que viene con Windows pero apagado, y CGI, que es la
 #  pieza que le permite hablar con PHP. Equivale a marcar «Internet Information

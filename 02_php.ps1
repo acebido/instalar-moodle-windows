@@ -1,10 +1,10 @@
 ﻿# =============================================================================
 #  02 · Instalar PHP 8.3 en C:\php
-#  Instalar Moodle 5.2 en Windows 11, pieza a pieza — Acebido · José Luis Díaz
+#  Instalar Moodle 5.3 en Windows 11, pieza a pieza — Acebido · José Luis Díaz
 # =============================================================================
 #  Qué hace:
 #   1. Instala el Visual C++ Redistributable (PHP lo necesita para arrancar).
-#   2. Pone PHP 8.3 «Non Thread Safe» x64 en C:\php, a partir de C:\instaladores:
+#   2. Pone PHP 8.3 o superior «Non Thread Safe» x64 en C:\php, a partir de C:\instaladores:
 #      lo busca en C:\instaladores, junto a los scripts y en Descargas; si no, lo descarga.
 #   3. Crea C:\php\php.ini con las extensiones y los límites que pide Moodle.
 #   4. Añade C:\php al PATH y deja OPENSSL_CONF apuntando a extras\ssl\openssl.cnf.
@@ -30,13 +30,15 @@ if (-not (Test-Path $vc)) { curl.exe -L -s -o $vc https://aka.ms/vs/17/release/v
 Start-Process -FilePath $vc -ArgumentList '/install','/quiet','/norestart' -Wait
 Write-Host '  instalado'
 
-Write-Host '== 2. PHP 8.3 en C:\php ==' -ForegroundColor Cyan
+Write-Host '== 2. PHP 8.3 o superior en C:\php ==' -ForegroundColor Cyan
 if (Test-Path "$DEST\php.exe") {
   Write-Host '  C:\php ya existe: lo dejo como está'
 } else {
   # Busca sin exigir el nombre exacto: cualquier PHP 8.x «non thread safe» de 64 bits,
   # ya descomprimido o en ZIP, aunque el navegador le haya añadido « (1)» al nombre.
-  $esPHP    = { $_.Name -like 'php-8.*' -and $_.Name -match 'nts' -and $_.Name -match 'x64' }
+  # Moodle 5.3 pide PHP 8.3 como minimo: 8.0, 8.1 y 8.2 no sirven aunque esten ahi.
+  $esPHP    = { $_.Name -match '^php-8\.(\d+)' -and [int]$Matches[1] -ge 3 -and
+                $_.Name -match 'nts' -and $_.Name -match 'x64' }
   $carpeta  = Get-ChildItem $BUSCA -Directory -EA SilentlyContinue | Where-Object $esPHP |
               Sort-Object Name -Descending | Select-Object -First 1
   $zip      = Get-ChildItem $BUSCA -File -Filter '*.zip' -EA SilentlyContinue | Where-Object $esPHP |
@@ -118,6 +120,12 @@ if (Test-Path $cnf) {
 Write-Host '== Comprobación ==' -ForegroundColor Cyan
 & "$DEST\php.exe" -v
 $cargadas = & "$DEST\php.exe" -m
+$v = (& "$DEST\php.exe" -r "echo PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION;") 2>$null
+if ([version]$v -lt [version]'8.3') {
+  Write-Host "  PHP $v es demasiado antiguo: Moodle 5.3 pide 8.3 o superior." -ForegroundColor Red
+  Write-Host '  Borra C:\php, deja el ZIP correcto y repite este script.' -ForegroundColor Red
+  exit 1
+}
 $faltan = @('curl','fileinfo','gd','intl','mbstring','mysqli','openssl','soap','sodium','zip','Zend OPcache') | Where-Object { $cargadas -notcontains $_ }
 if ($faltan) { Write-Host "  Faltan extensiones: $($faltan -join ', ')" -ForegroundColor Red }
 else { Write-Host '  OK: PHP 8.3 con todas las extensiones que pide Moodle.' -ForegroundColor Green }

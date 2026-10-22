@@ -1,9 +1,9 @@
 ﻿# =============================================================================
 #  05 · Preparar Moodle: código, moodledata y el sitio de IIS
-#  Instalar Moodle 5.2 en Windows 11, pieza a pieza — Acebido · José Luis Díaz
+#  Instalar Moodle 5.3 en Windows 11, pieza a pieza — Acebido · José Luis Díaz
 # =============================================================================
 #  Qué hace:
-#   1. Pone el código de Moodle 5.2 en C:\moodle (desde C:\instaladores).
+#   1. Pone el código de Moodle 5.3 en C:\moodle (desde C:\instaladores).
 #   2. Crea C:\moodledata, FUERA de la web, con permiso de escritura para IIS.
 #   3. Para el «Default Web Site» y crea el sitio «Moodle» apuntando a
 #      C:\moodle\PUBLIC. En Moodle 5 se publica solo la carpeta public.
@@ -24,7 +24,12 @@ Write-Host '== 1. Código de Moodle en C:\moodle ==' -ForegroundColor Cyan
 if (-not (Test-Path "$CODE\public\index.php")) {
   $idx = Get-ChildItem $BUSCA -Recurse -Depth 3 -Filter version.php -ErrorAction SilentlyContinue |
          Where-Object { $_.DirectoryName -like '*\public' } | Select-Object -First 1
-  $zip = Get-ChildItem $BUSCA -File -Filter 'moodle-*.zip' -ErrorAction SilentlyContinue | Select-Object -First 1
+  # Si hay varios ZIP de Moodle, el de la rama mas alta (moodle-latest-503 > 502).
+  $zip = Get-ChildItem $BUSCA -File -Filter 'moodle-*.zip' -ErrorAction SilentlyContinue |
+         Sort-Object Name -Descending | Select-Object -First 1
+  if ($zip -and $zip.Name -match 'moodle-latest-(\d+)' -and [int]$Matches[1] -lt 503) {
+    Write-Host "  ojo: $($zip.Name) no es Moodle 5.3. Esta guia esta hecha para la 5.3." -ForegroundColor Yellow
+  }
   if ($idx) { Move-Item $idx.Directory.Parent.FullName $CODE; Write-Host "  movida $($idx.Directory.Parent.FullName) -> C:\moodle" }
   elseif ($zip) {
     Write-Host "  descomprimiendo $($zip.Name) con tar.exe (un par de minutos; Expand-Archive tardaría media hora)..."
