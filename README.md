@@ -35,10 +35,12 @@ tabla son el mínimo, no una preferencia. Con PHP 8.2 el instalador se para.
 3. Ve a la carpeta y permite los scripts **solo en esa ventana**:
 
    ```powershell
-   cd "$HOME\Documents\instalar-moodle-windows-main"   # la carpeta que has descomprimido
-   Set-ExecutionPolicy -Scope Process Bypass -Force
-   Get-ChildItem *.ps1 | Unblock-File
+   cd "$HOME\Documents\instalar-moodle-windows-main"
+   Set-ExecutionPolicy Bypass -Scope Process -Force; gci *.ps1 | Unblock-File
    ```
+
+   Pega **una línea, Intro, y luego la otra**. Si las copias juntas desde un PDF se pierde el
+   salto de línea y PowerShell las junta en una orden sin sentido (`-ForceGet-ChildItem`).
 
 4. Ejecútalos **en orden**, uno a uno, y lee el resultado de cada uno antes de seguir:
 
