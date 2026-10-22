@@ -29,13 +29,18 @@ tabla son el mínimo, no una preferencia. Con PHP 8.2 el instalador se para.
 
 ## Cómo se ejecutan
 
-1. En esta página de GitHub, pulsa el botón verde **Code → Download ZIP** y descomprímelo,
-   por ejemplo en `Documentos`.
-2. Abre **PowerShell como administrador** (botón derecho en Inicio → *Terminal (Administrador)*).
+1. En esta página de GitHub, pulsa el botón verde **Code → Download ZIP** y descomprímelo.
+   Da igual dónde: la orden del punto 3 busca la carpeta sola. Ten en cuenta que Windows suele
+   dejar `instalar-moodle-windows-main` **dentro de otra carpeta con el mismo nombre**.
+2. **Doble clic en `abrir-powershell-aqui.cmd`**, dentro de la carpeta de los scripts, y acepta
+   el aviso de Windows: abre PowerShell como administrador ya colocado en la carpeta y con los
+   scripts permitidos. Si lo haces así, sáltate el punto 3.
+
+   A mano: abre **PowerShell como administrador** (botón derecho en Inicio → *Terminal (Administrador)*).
 3. Ve a la carpeta y permite los scripts **solo en esa ventana**:
 
    ```powershell
-   cd "$HOME\Documents\instalar-moodle-windows-main"
+   cd (gci $HOME -Rec -Filter 01_iis.ps1 -EA 0|select -First 1).DirectoryName
    Set-ExecutionPolicy Bypass -Scope Process -Force; gci *.ps1 | Unblock-File
    ```
 
