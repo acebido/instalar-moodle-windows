@@ -9,12 +9,6 @@ MariaDB 11.4 y Moodle 5.2, **sin XAMPP**.
 
 ## Antes de empezar
 
-**Lo primero: instala el Visual C++ Redistributable.** PHP no arranca en Windows sin él, así que
-instálalo **antes de ejecutar ningún script**: descárgalo de
-<https://aka.ms/vs/17/release/vc_redist.x64.exe>, ejecútalo y, si te pide reiniciar, reinicia.
-El script `02_php.ps1` también lo instala por su cuenta, pero haciéndolo tú primero evitas que
-falle por un reinicio pendiente o por no tener conexión en ese momento.
-
 1. Windows 11 (o Windows 10/Server) de 64 bits y una cuenta de **administrador**.
 2. Unos 10 GB libres en el disco.
 3. Que nada ocupe los puertos **80** y **3306** (otro servidor web, XAMPP, otra base de datos…).
@@ -23,8 +17,8 @@ falle por un reinicio pendiente o por no tener conexión en ese momento.
 
 | Fichero | De dónde |
 |---|---|
-| `vc_redist.x64.exe` | aka.ms/vs/17/release/vc_redist.x64.exe — **instálalo tú antes de empezar** (ver arriba) |
-| `php-8.3.x-nts-Win32-vs16-x64.zip` | windows.php.net/download → PHP 8.3 → **Non Thread Safe** → Zip **x64** |
+| `vc_redist.x64.exe` | aka.ms/vs/17/release/vc_redist.x64.exe (el script 02 lo baja e instala solo) |
+| `php-8.3.x-nts-Win32-vs16-x64.zip` | downloads.php.net/~windows/releases/archives/ → el más nuevo `php-8.3.*-nts-Win32-vs16-x64.zip` |
 | `mariadb-11.4.x-winx64.zip` | mariadb.org/download → 11.4 (LTS) → Windows → **ZIP** |
 | `moodle-latest-502.zip` | download.moodle.org/releases/latest → el **.zip** de la 5.2 |
 
