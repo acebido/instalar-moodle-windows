@@ -5,6 +5,7 @@
 #  Qué hace: lo mismo que el instalador de http://localhost, pero con una sola
 #  orden: crea config.php y las ~500 tablas, y el usuario administrador.
 #  Por consola no hay ningún servidor web que corte a mitad.
+#  Al final borra el info.php de prueba que dejó el script 03.
 #
 #  Te pedirá: la contraseña de moodleuser (la del script 04), el nombre del
 #  campus y la contraseña y el correo del administrador de Moodle.
@@ -31,6 +32,14 @@ Write-Host '== Instalando Moodle (varios minutos, no cierres la ventana) ==' -Fo
   --fullname="$NOMBRE" --shortname="$CORTO" `
   --adminuser=admin --adminpass="$ADMINPW" --adminemail="$CORREO" `
   --lang=es --non-interactive --agree-license 2>&1 | ForEach-Object { Write-Host "  $_" }
+
+Write-Host '== Limpieza ==' -ForegroundColor Cyan
+# info.php lo dejó el script 03 para comprobar que IIS y PHP se entendían.
+# Ya no hace falta y enseña la configuración del servidor: se borra.
+if (Test-Path 'C:\inetpub\wwwroot\info.php') {
+  Remove-Item 'C:\inetpub\wwwroot\info.php' -Force
+  Write-Host '  borrado C:\inetpub\wwwroot\info.php (el phpinfo de prueba)'
+} else { Write-Host '  nada que borrar' }
 
 Write-Host '== Comprobación ==' -ForegroundColor Cyan
 if (Test-Path 'C:\moodle\config.php') {
