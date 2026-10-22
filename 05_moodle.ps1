@@ -16,16 +16,20 @@ if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
 
 $INST = 'C:\instaladores'; $CODE = 'C:\moodle'; $DATA = 'C:\moodledata'
 
+# Los ZIP pueden estar en C:\instaladores, al lado de los scripts o en Descargas.
+$BUSCA = @($INST, $PSScriptRoot, (Join-Path $HOME 'Downloads')) |
+         Where-Object { $_ -and (Test-Path $_) } | Select-Object -Unique
+
 Write-Host '== 1. Código de Moodle en C:\moodle ==' -ForegroundColor Cyan
 if (-not (Test-Path "$CODE\public\index.php")) {
-  $idx = Get-ChildItem $INST -Recurse -Depth 3 -Filter version.php -ErrorAction SilentlyContinue |
+  $idx = Get-ChildItem $BUSCA -Recurse -Depth 3 -Filter version.php -ErrorAction SilentlyContinue |
          Where-Object { $_.DirectoryName -like '*\public' } | Select-Object -First 1
-  $zip = Get-ChildItem $INST -File -Filter 'moodle-*.zip' -ErrorAction SilentlyContinue | Select-Object -First 1
+  $zip = Get-ChildItem $BUSCA -File -Filter 'moodle-*.zip' -ErrorAction SilentlyContinue | Select-Object -First 1
   if ($idx) { Move-Item $idx.Directory.Parent.FullName $CODE; Write-Host "  movida $($idx.Directory.Parent.FullName) -> C:\moodle" }
   elseif ($zip) {
     Write-Host "  descomprimiendo $($zip.Name) con tar.exe (un par de minutos; Expand-Archive tardaría media hora)..."
     & tar.exe -x -f $zip.FullName -C 'C:\' }
-  else { Write-Host '  No encuentro Moodle en C:\instaladores. Descarga el .zip de download.moodle.org.' -ForegroundColor Red; exit 1 }
+  else { Write-Host '  No encuentro Moodle ni en C:\instaladores, ni junto a los scripts, ni en Descargas. Descarga el .zip de download.moodle.org.' -ForegroundColor Red; exit 1 }
 }
 if (-not (Test-Path "$CODE\public\index.php")) { Write-Host '  No existe C:\moodle\public\index.php: revisa la carpeta.' -ForegroundColor Red; exit 1 }
 Write-Host '  OK: C:\moodle\public\index.php'

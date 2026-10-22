@@ -28,18 +28,22 @@ if (-not $ROOTPW -or -not $DBPW) { Write-Host 'Las contraseñas no pueden estar 
 
 $INST = 'C:\instaladores'; $HOME_ = 'C:\mariadb'; $DATA = 'C:\mariadb\data'
 
+# Los ZIP pueden estar en C:\instaladores, al lado de los scripts o en Descargas.
+$BUSCA = @($INST, $PSScriptRoot, (Join-Path $HOME 'Downloads')) |
+         Where-Object { $_ -and (Test-Path $_) } | Select-Object -Unique
+
 Write-Host '== 1. MariaDB en C:\mariadb ==' -ForegroundColor Cyan
 if (-not (Test-Path "$HOME_\bin\mysqld.exe")) {
   # La carpeta descomprimida a veces trae otra carpeta igual dentro: busco la que tiene bin\mysqld.exe
-  $exe = Get-ChildItem $INST -Recurse -Depth 3 -Filter mysqld.exe -ErrorAction SilentlyContinue |
+  $exe = Get-ChildItem $BUSCA -Recurse -Depth 3 -Filter mysqld.exe -ErrorAction SilentlyContinue |
          Where-Object { $_.FullName -like '*mariadb-11.4*' } | Select-Object -First 1
-  $zip = Get-ChildItem $INST -File -Filter 'mariadb-11.4*-winx64.zip' -ErrorAction SilentlyContinue | Select-Object -First 1
+  $zip = Get-ChildItem $BUSCA -File -Filter 'mariadb-11.4*-winx64.zip' -ErrorAction SilentlyContinue | Select-Object -First 1
   if ($exe) { Move-Item $exe.Directory.Parent.FullName $HOME_; Write-Host "  movida $($exe.Directory.Parent.FullName) -> C:\mariadb" }
   elseif ($zip) {
     Expand-Archive -Path $zip.FullName -DestinationPath 'C:\' -Force
     Rename-Item (Get-ChildItem 'C:\' -Directory -Filter 'mariadb-11.4*-winx64' | Select-Object -First 1).FullName $HOME_
     Write-Host "  descomprimido $($zip.Name)" }
-  else { Write-Host '  No encuentro MariaDB 11.4 en C:\instaladores. Descarga el ZIP para Windows de mariadb.org/download.' -ForegroundColor Red; exit 1 }
+  else { Write-Host '  No encuentro MariaDB 11.4 ni en C:\instaladores, ni junto a los scripts, ni en Descargas. Descarga el ZIP para Windows de mariadb.org/download.' -ForegroundColor Red; exit 1 }
 }
 
 Write-Host '== 2. Inicializar los datos y registrar el servicio ==' -ForegroundColor Cyan

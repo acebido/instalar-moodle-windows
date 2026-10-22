@@ -5,7 +5,7 @@
 #  Qué hace:
 #   1. Instala el Visual C++ Redistributable (PHP lo necesita para arrancar).
 #   2. Pone PHP 8.3 «Non Thread Safe» x64 en C:\php, a partir de C:\instaladores:
-#      usa la carpeta ya descomprimida si está, si no el ZIP, y si no lo descarga.
+#      lo busca en C:\instaladores, junto a los scripts y en Descargas; si no, lo descarga.
 #   3. Crea C:\php\php.ini con las extensiones y los límites que pide Moodle.
 #   4. Añade C:\php al PATH.
 #
@@ -18,8 +18,14 @@ if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
 $INST = 'C:\instaladores'; $DEST = 'C:\php'
 New-Item -ItemType Directory -Path $INST -Force | Out-Null
 
+# Los ZIP pueden estar en C:\instaladores, al lado de los scripts o en Descargas.
+$BUSCA = @($INST, $PSScriptRoot, (Join-Path $HOME 'Downloads')) |
+         Where-Object { $_ -and (Test-Path $_) } | Select-Object -Unique
+
 Write-Host '== 1. Visual C++ Redistributable ==' -ForegroundColor Cyan
-$vc = Join-Path $INST 'vc_redist.x64.exe'
+$vc = Get-ChildItem $BUSCA -File -Filter 'vc_redist.x64.exe' -EA SilentlyContinue |
+      Select-Object -First 1 -ExpandProperty FullName
+if (-not $vc) { $vc = Join-Path $INST 'vc_redist.x64.exe' }
 if (-not (Test-Path $vc)) { curl.exe -L -s -o $vc https://aka.ms/vs/17/release/vc_redist.x64.exe }
 Start-Process -FilePath $vc -ArgumentList '/install','/quiet','/norestart' -Wait
 Write-Host '  instalado'
@@ -31,9 +37,9 @@ if (Test-Path "$DEST\php.exe") {
   # Busca sin exigir el nombre exacto: cualquier PHP 8.x «non thread safe» de 64 bits,
   # ya descomprimido o en ZIP, aunque el navegador le haya añadido « (1)» al nombre.
   $esPHP    = { $_.Name -like 'php-8.*' -and $_.Name -match 'nts' -and $_.Name -match 'x64' }
-  $carpeta  = Get-ChildItem $INST -Directory -EA SilentlyContinue | Where-Object $esPHP |
+  $carpeta  = Get-ChildItem $BUSCA -Directory -EA SilentlyContinue | Where-Object $esPHP |
               Sort-Object Name -Descending | Select-Object -First 1
-  $zip      = Get-ChildItem $INST -File -Filter '*.zip' -EA SilentlyContinue | Where-Object $esPHP |
+  $zip      = Get-ChildItem $BUSCA -File -Filter '*.zip' -EA SilentlyContinue | Where-Object $esPHP |
               Sort-Object Name -Descending | Select-Object -First 1
 
   if (-not $carpeta -and -not $zip) {
@@ -60,8 +66,9 @@ if (Test-Path "$DEST\php.exe") {
     Expand-Archive -Path $zip.FullName -DestinationPath $DEST -Force; Write-Host "  descomprimido $($zip.Name)"
   } else {
     Write-Host '  No encuentro PHP en C:\instaladores y no he podido descargarlo.' -ForegroundColor Red
-    Write-Host '  Esto es lo que hay ahora mismo en la carpeta:'
-    Get-ChildItem $INST -EA SilentlyContinue | ForEach-Object { Write-Host "    $($_.Name)" }
+    Write-Host '  He mirado en estas carpetas:'
+    foreach ($d in $BUSCA) { Write-Host "    $d"
+      Get-ChildItem $d -EA SilentlyContinue | ForEach-Object { Write-Host "      $($_.Name)" } }
     Write-Host '  Descarga de downloads.php.net/~windows/releases/archives/ el ZIP mas nuevo que empiece'
     Write-Host '  por php-8.3. y acabe en -nts-Win32-vs16-x64.zip, dejalo en C:\instaladores y repite.'
     exit 1
