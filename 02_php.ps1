@@ -7,7 +7,7 @@
 #   2. Pone PHP 8.3 «Non Thread Safe» x64 en C:\php, a partir de C:\instaladores:
 #      lo busca en C:\instaladores, junto a los scripts y en Descargas; si no, lo descarga.
 #   3. Crea C:\php\php.ini con las extensiones y los límites que pide Moodle.
-#   4. Añade C:\php al PATH.
+#   4. Añade C:\php al PATH y deja OPENSSL_CONF apuntando a extras\ssl\openssl.cnf.
 #
 #  Cómo se ejecuta: PowerShell COMO ADMINISTRADOR, en esta carpeta:  .\02_php.ps1
 # =============================================================================
@@ -105,9 +105,25 @@ Write-Host '== 4. C:\php en el PATH ==' -ForegroundColor Cyan
 $p = [Environment]::GetEnvironmentVariable('Path','Machine')
 if ($p -notlike "*$DEST*") { [Environment]::SetEnvironmentVariable('Path', "$p;$DEST", 'Machine'); Write-Host '  añadido (abre una consola nueva para usar «php»)' }
 
+Write-Host '== 5. OPENSSL_CONF ==' -ForegroundColor Cyan
+# Sin esta variable, en Windows openssl_pkey_new() devuelve false y Moodle no puede
+# generar las claves RSA de LTI al instalarse («Cannot get key from parameter 1»).
+$cnf = "$DEST\extras\ssl\openssl.cnf"
+if (Test-Path $cnf) {
+  [Environment]::SetEnvironmentVariable('OPENSSL_CONF', $cnf, 'Machine')
+  $env:OPENSSL_CONF = $cnf
+  Write-Host "  OPENSSL_CONF = $cnf"
+} else { Write-Host '  ojo: no encuentro extras\ssl\openssl.cnf dentro de C:\php' -ForegroundColor Yellow }
+
 Write-Host '== Comprobación ==' -ForegroundColor Cyan
 & "$DEST\php.exe" -v
 $cargadas = & "$DEST\php.exe" -m
 $faltan = @('curl','fileinfo','gd','intl','mbstring','mysqli','openssl','soap','sodium','zip','Zend OPcache') | Where-Object { $cargadas -notcontains $_ }
 if ($faltan) { Write-Host "  Faltan extensiones: $($faltan -join ', ')" -ForegroundColor Red }
 else { Write-Host '  OK: PHP 8.3 con todas las extensiones que pide Moodle.' -ForegroundColor Green }
+
+# Que OpenSSL sepa crear una clave: es lo que Moodle necesita al instalarse.
+$prueba = & "$DEST\php.exe" -r "var_dump(openssl_pkey_new(['private_key_bits'=>2048]) !== false);" 2>&1
+if ("$prueba" -match 'true') { Write-Host '  OK: OpenSSL puede generar claves.' -ForegroundColor Green }
+else { Write-Host "  OpenSSL NO puede generar claves: $prueba" -ForegroundColor Red
+       Write-Host '  Revisa OPENSSL_CONF antes de seguir con el script 03.' -ForegroundColor Red }
