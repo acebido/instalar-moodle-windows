@@ -28,17 +28,55 @@ Write-Host '== 2. PHP 8.3 en C:\php ==' -ForegroundColor Cyan
 if (Test-Path "$DEST\php.exe") {
   Write-Host '  C:\php ya existe: lo dejo como está'
 } else {
-  $carpeta = Get-ChildItem $INST -Directory -Filter 'php-8.3*-nts-Win32-*-x64' -ErrorAction SilentlyContinue | Select-Object -First 1
-  $zip     = Get-ChildItem $INST -File -Filter 'php-8.3*-nts-Win32-*-x64.zip' -ErrorAction SilentlyContinue | Select-Object -First 1
+  # Busca sin exigir el nombre exacto: cualquier PHP 8.x «non thread safe» de 64 bits,
+  # ya descomprimido o en ZIP, aunque el navegador le haya añadido « (1)» al nombre.
+  $esPHP    = { $_.Name -like 'php-8.*' -and $_.Name -match 'nts' -and $_.Name -match 'x64' }
+  $carpeta  = Get-ChildItem $INST -Directory -EA SilentlyContinue | Where-Object $esPHP |
+              Sort-Object Name -Descending | Select-Object -First 1
+  $zip      = Get-ChildItem $INST -File -Filter '*.zip' -EA SilentlyContinue | Where-Object $esPHP |
+              Sort-Object Name -Descending | Select-Object -First 1
+
+  if (-not $carpeta -and -not $zip) {
+    Write-Host '  no lo tengo en C:\instaladores: lo descargo' -ForegroundColor Yellow
+    foreach ($url in 'https://downloads.php.net/~windows/releases/archives/',
+                     'https://windows.php.net/downloads/releases/archives/') {
+      try {
+        $html = (Invoke-WebRequest $url -UseBasicParsing).Content
+        $f = [regex]::Matches($html, 'php-8\.3\.\d+-nts-Win32-vs\d+-x64\.zip') |
+             ForEach-Object { $_.Value } | Sort-Object { [int]($_ -replace '^php-8\.3\.(\d+).*$','$1') } |
+             Select-Object -Last 1
+        if ($f) {
+          $zip = Join-Path $INST $f
+          curl.exe -L -s -o $zip ($url + $f)
+          $zip = Get-Item $zip; Write-Host "  descargado $f"; break
+        }
+      } catch { }
+    }
+  }
+
   if ($carpeta -and (Test-Path "$($carpeta.FullName)\php.exe")) {
     Move-Item $carpeta.FullName $DEST; Write-Host "  movida $($carpeta.Name) -> C:\php"
   } elseif ($zip) {
-    Expand-Archive -Path $zip.FullName -DestinationPath $DEST; Write-Host "  descomprimido $($zip.Name)"
+    Expand-Archive -Path $zip.FullName -DestinationPath $DEST -Force; Write-Host "  descomprimido $($zip.Name)"
   } else {
-    Write-Host '  No encuentro PHP en C:\instaladores.' -ForegroundColor Red
-    Write-Host '  Descarga de windows.php.net/download el ZIP de PHP 8.3 «Non Thread Safe» x64, déjalo en C:\instaladores y repite.'
+    Write-Host '  No encuentro PHP en C:\instaladores y no he podido descargarlo.' -ForegroundColor Red
+    Write-Host '  Esto es lo que hay ahora mismo en la carpeta:'
+    Get-ChildItem $INST -EA SilentlyContinue | ForEach-Object { Write-Host "    $($_.Name)" }
+    Write-Host '  Descarga de downloads.php.net/~windows/releases/archives/ el ZIP mas nuevo que empiece'
+    Write-Host '  por php-8.3. y acabe en -nts-Win32-vs16-x64.zip, dejalo en C:\instaladores y repite.'
     exit 1
   }
+}
+
+if (-not (Test-Path "$DEST\php.exe")) {
+  # El ZIP trae a veces una carpeta dentro en vez de los ficheros sueltos.
+  $dentro = Get-ChildItem $DEST -Directory -EA SilentlyContinue |
+            Where-Object { Test-Path "$($_.FullName)\php.exe" } | Select-Object -First 1
+  if ($dentro) { Get-ChildItem $dentro.FullName -Force | Move-Item -Destination $DEST
+                 Remove-Item $dentro.FullName -Force -Recurse }
+}
+if (-not (Test-Path "$DEST\php.exe")) {
+  Write-Host '  C:\php no tiene php.exe' -ForegroundColor Red; exit 1
 }
 
 Write-Host '== 3. php.ini ==' -ForegroundColor Cyan
