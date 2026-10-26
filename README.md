@@ -40,12 +40,10 @@ tabla son el mínimo, no una preferencia. Con PHP 8.2 el instalador se para.
 3. Ve a la carpeta y permite los scripts **solo en esa ventana**:
 
    ```powershell
-   cd (gci $HOME -Rec -Filter 01_iis.ps1 -EA 0|select -First 1).DirectoryName
-   Set-ExecutionPolicy Bypass -Scope Process -Force; gci *.ps1 | Unblock-File
+   cd (gci ~ -Recurse -Filter 01_iis.ps1 -ea 0)[0].Directory; Set-ExecutionPolicy Bypass Process -f
    ```
 
-   Pega **una línea, Intro, y luego la otra**. Si las copias juntas desde un PDF se pierde el
-   salto de línea y PowerShell las junta en una orden sin sentido (`-ForceGet-ChildItem`).
+   Es **una sola línea**: pégala entera y pulsa Intro.
 
 4. Ejecútalos **en orden**, uno a uno, y lee el resultado de cada uno antes de seguir:
 
