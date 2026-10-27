@@ -22,6 +22,7 @@ $caracteristicas = @(
   'IIS-ApplicationDevelopment','IIS-CGI','IIS-WebServerManagementTools','IIS-ManagementConsole'
 )
 Write-Host '== Activando IIS y CGI (un par de minutos) ==' -ForegroundColor Cyan
+Write-Host '   Enciende IIS, el servidor web que trae Windows, y CGI, la pieza que le permite hablar con PHP.' -ForegroundColor Gray
 foreach ($c in $caracteristicas) {
   if ((Get-WindowsOptionalFeature -Online -FeatureName $c).State -ne 'Enabled') {
     Write-Host "  activando $c ..."
@@ -32,6 +33,7 @@ Set-Service -Name W3SVC -StartupType Automatic
 Start-Service W3SVC -ErrorAction SilentlyContinue
 
 Write-Host '== Comprobación ==' -ForegroundColor Cyan
+Write-Host '   Abre http://localhost: si responde, IIS ya funciona.' -ForegroundColor Gray
 try {
   $r = Invoke-WebRequest -Uri http://localhost/ -UseBasicParsing -TimeoutSec 15
   Write-Host "  OK: http://localhost responde (HTTP $($r.StatusCode)). Ábrelo en el navegador: sale la página azul de IIS." -ForegroundColor Green

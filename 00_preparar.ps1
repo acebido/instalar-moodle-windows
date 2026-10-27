@@ -39,10 +39,12 @@ $PIEZAS = @(
      web    = 'download.moodle.org/releases/latest -> el .zip' }
   @{ nombre = 'Visual C++ Redistributable'
      filtro = { $_.Name -eq 'vc_redist.x64.exe' }
-     web    = 'aka.ms/vs/17/release/vc_redist.x64.exe (el script 02 lo baja solo si falta)' }
+     web    = 'aka.ms/vs/17/release/vc_redist.x64.exe (el script 02 lo baja solo si falta)'
+     opcional = $true }   # 27-10-2026: no es un fallo que no esté: lo descarga e instala el 02
 )
 
 Write-Host "== Recogiendo los instaladores en $INST ==" -ForegroundColor Cyan
+Write-Host '   Busca PHP, MariaDB, Moodle y Visual C++ en Descargas, Escritorio y Documentos, y los deja en C:\instaladores.' -ForegroundColor Gray
 Write-Host '   Miro en:'
 foreach ($d in $BUSCA) { Write-Host "     $d" }
 Write-Host ''
@@ -60,6 +62,8 @@ foreach ($p in $PIEZAS) {
     Move-Item $hallado.FullName (Join-Path $INST $hallado.Name) -Force
     Write-Host "  movido:    $($hallado.Name)" -ForegroundColor Green
     Write-Host "             desde $($hallado.DirectoryName)"
+  } elseif ($p.opcional) {
+    Write-Host "  luego:     $($p.nombre) (lo descarga e instala el script 02)" -ForegroundColor Gray
   } else {
     Write-Host "  FALTA:     $($p.nombre)" -ForegroundColor Yellow
     Write-Host "             $($p.web)"
@@ -69,10 +73,11 @@ foreach ($p in $PIEZAS) {
 
 Write-Host ''
 Write-Host '== Comprobación ==' -ForegroundColor Cyan
+Write-Host '   Lista lo que hay en C:\instaladores y avisa de lo que falte.' -ForegroundColor Gray
 Get-ChildItem $INST -File | ForEach-Object { Write-Host ("  {0,10:N1} MB  {1}" -f ($_.Length/1MB), $_.Name) }
 if ($faltan) {
   Write-Host ''
-  Write-Host "  Faltan $($faltan.Count) cosa(s). El PHP y el Visual C++ los descarga el script 02 si no están," -ForegroundColor Yellow
+  Write-Host "  Faltan $($faltan.Count) cosa(s). El PHP lo descarga el script 02 si no está," -ForegroundColor Yellow
   Write-Host '  pero MariaDB y Moodle los tienes que bajar tú.' -ForegroundColor Yellow
 } else {
   Write-Host '  OK: lo tienes todo. Sigue con .\01_iis.ps1' -ForegroundColor Green

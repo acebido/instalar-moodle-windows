@@ -10,7 +10,8 @@ MariaDB 11.4 y Moodle 5.3, **sin XAMPP**.
 ## Antes de empezar
 
 1. Windows 11 (o Windows 10/Server) de 64 bits y una cuenta de **administrador**.
-2. Unos 10 GB libres en el disco.
+2. Unos 10 GB libres en el disco y **conexión a internet** (el script 05 descarga Composer y
+   las librerías que necesita Moodle).
 3. Que nada ocupe los puertos **80** y **3306** (otro servidor web, XAMPP, otra base de datos…).
 4. Descarga los ZIP de la tabla. **Da igual en qué carpeta acaben**: el primer script,
    `00_preparar.ps1`, los busca en Descargas, Escritorio, Documentos y junto a los propios
@@ -54,13 +55,18 @@ tabla son el mínimo, no una preferencia. Con PHP 8.2 el instalador se para.
    | `.\02_php.ps1` | PHP 8.3 en `C:\php` con su `php.ini` | — |
    | `.\03_iis_php.ps1` | Une IIS y PHP (FastCGI) con tiempos ampliados | — |
    | `.\04_mariadb.ps1` | MariaDB 11.4, base de datos `moodle` y usuario `moodleuser` | contraseñas de root y de moodleuser |
-   | `.\05_moodle.ps1` | Código en `C:\moodle`, `C:\moodledata` y el sitio de IIS | — |
-   | `.\06_instalar_moodle.ps1` | Instala Moodle por consola *(o usa el instalador de http://localhost)* | contraseña de moodleuser, nombre del campus y datos del administrador |
+   | `.\05_moodle.ps1` | Código en `C:\moodle`, `C:\moodledata`, el sitio de IIS, las librerías de Composer y el router | — |
+   | `.\06_instalar_moodle.ps1` | Instala Moodle por consola, avisa a Moodle del router y programa el cron | contraseña de moodleuser, nombre del campus y datos del administrador |
 
 5. Abre **http://localhost** y entra con el usuario `admin`.
 
-Cada script termina con una **comprobación** en verde (bien) o en rojo (algo ha fallado,
-con el motivo). Si uno falla, no pases al siguiente.
+> ¿Prefieres el instalador del navegador? Después de terminarlo en http://localhost, ejecuta
+> igualmente `.\06_instalar_moodle.ps1`: al ver que Moodle ya está instalado, solo hace los
+> ajustes finales (router y cron).
+
+Debajo de cada paso, en gris, el script explica **qué hace**. Cada uno termina con una
+**comprobación** en verde (bien) o en rojo (algo ha fallado, con el motivo). Si uno falla,
+no pases al siguiente.
 
 ## Apunta las contraseñas
 
@@ -70,7 +76,7 @@ con el motivo). Si uno falla, no pases al siguiente.
 | moodleuser | La usa Moodle (queda en `C:\moodle\config.php`) |
 | admin de Moodle | Entrar en el campus |
 
-## Las tres trampas que estos scripts ya resuelven
+## Las seis trampas que estos scripts ya resuelven
 
 1. **IIS corta PHP a los 90 segundos.** La instalación de Moodle tarda más y se queda a
    medias sin ningún error. El script 03 sube los tiempos.
@@ -78,6 +84,14 @@ con el motivo). Si uno falla, no pases al siguiente.
    que lee el servicio (el de `C:\mariadb\data`, no otro).
 3. **Moodle 5 se publica desde la carpeta `public`.** El script 05 apunta el sitio a
    `C:\moodle\public`, no a `C:\moodle`.
+4. **Desde Moodle 5.1 el ZIP no trae todas las librerías.** Faltan las de Composer (la carpeta
+   `vendor`) y, sin ellas, parte del sitio da error 500. El script 05 descarga Composer de su
+   web oficial, comprueba su firma y las instala.
+5. **Moodle 5 necesita un «router».** Las direcciones nuevas (que no son un fichero) tienen que
+   llegar a `r.php`. El script 05 lo resuelve con un `web.config` en `C:\moodle\public`, sin
+   instalar el módulo URL Rewrite de IIS, y el 06 lo indica en `config.php`.
+6. **Sin cron, Moodle no envía correos ni hace sus tareas.** El script 06 crea la tarea
+   programada «Moodle cron», que se ejecuta cada minuto.
 
 ---
 Acebido · Formación · Tecnología · Futuro — José Luis Díaz.

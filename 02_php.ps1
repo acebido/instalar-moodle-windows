@@ -23,6 +23,7 @@ $BUSCA = @($INST, $PSScriptRoot, (Join-Path $HOME 'Downloads')) |
          Where-Object { $_ -and (Test-Path $_) } | Select-Object -Unique
 
 Write-Host '== 1. Visual C++ Redistributable ==' -ForegroundColor Cyan
+Write-Host '   PHP está hecho con Visual C++: sin estas librerías, php.exe no arranca.' -ForegroundColor Gray
 $vc = Get-ChildItem $BUSCA -File -Filter 'vc_redist.x64.exe' -EA SilentlyContinue |
       Select-Object -First 1 -ExpandProperty FullName
 if (-not $vc) { $vc = Join-Path $INST 'vc_redist.x64.exe' }
@@ -31,6 +32,7 @@ Start-Process -FilePath $vc -ArgumentList '/install','/quiet','/norestart' -Wait
 Write-Host '  instalado'
 
 Write-Host '== 2. PHP 8.3 o superior en C:\php ==' -ForegroundColor Cyan
+Write-Host '   Copia PHP a C:\php (desde C:\instaladores; si no está, lo descarga).' -ForegroundColor Gray
 if (Test-Path "$DEST\php.exe") {
   Write-Host '  C:\php ya existe: lo dejo como está'
 } else {
@@ -89,10 +91,12 @@ if (-not (Test-Path "$DEST\php.exe")) {
 }
 
 Write-Host '== 3. php.ini ==' -ForegroundColor Cyan
+Write-Host '   Activa las extensiones que pide Moodle y sube la memoria, el tamaño de subida y los tiempos.' -ForegroundColor Gray
 $ini = Get-Content "$DEST\php.ini-production" -Raw
 $ini = $ini -replace '(?m)^;?\s*extension_dir\s*=.*$', 'extension_dir = "C:\php\ext"'
 foreach ($e in 'curl','fileinfo','gd','intl','mbstring','exif','mysqli','openssl','soap','sodium','zip') {
-  $ini = $ini -replace ("(?m)^;extension=" + [regex]::Escape($e) + "\s*$"), ("extension=" + $e) }
+  # \b y .* : algunas líneas llevan un comentario detrás (la de exif: «; Must be after mbstring…»)
+  $ini = $ini -replace ("(?m)^;extension=" + [regex]::Escape($e) + "\b.*$"), ("extension=" + $e) }
 $valores = [ordered]@{ memory_limit='256M'; post_max_size='256M'; upload_max_filesize='256M';
   max_execution_time='300'; max_input_vars='5000'; 'date.timezone'='Europe/Madrid';
   'cgi.fix_pathinfo'='1'; 'fastcgi.impersonate'='1' }
@@ -104,10 +108,12 @@ Set-Content -Path "$DEST\php.ini" -Value $ini -Encoding Ascii
 Write-Host '  escrito C:\php\php.ini'
 
 Write-Host '== 4. C:\php en el PATH ==' -ForegroundColor Cyan
+Write-Host '   Así se puede escribir «php» desde cualquier carpeta.' -ForegroundColor Gray
 $p = [Environment]::GetEnvironmentVariable('Path','Machine')
 if ($p -notlike "*$DEST*") { [Environment]::SetEnvironmentVariable('Path', "$p;$DEST", 'Machine'); Write-Host '  añadido (abre una consola nueva para usar «php»)' }
 
 Write-Host '== 5. OPENSSL_CONF ==' -ForegroundColor Cyan
+Write-Host '   Le dice a PHP dónde está la configuración de OpenSSL, que Moodle necesita para crear claves.' -ForegroundColor Gray
 # Sin esta variable, en Windows openssl_pkey_new() devuelve false y Moodle no puede
 # generar las claves RSA de LTI al instalarse («Cannot get key from parameter 1»).
 $cnf = "$DEST\extras\ssl\openssl.cnf"
@@ -118,6 +124,7 @@ if (Test-Path $cnf) {
 } else { Write-Host '  ojo: no encuentro extras\ssl\openssl.cnf dentro de C:\php' -ForegroundColor Yellow }
 
 Write-Host '== Comprobación ==' -ForegroundColor Cyan
+Write-Host '   Comprueba la versión de PHP, las extensiones y que OpenSSL funciona.' -ForegroundColor Gray
 & "$DEST\php.exe" -v
 $cargadas = & "$DEST\php.exe" -m
 $v = (& "$DEST\php.exe" -r "echo PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION;") 2>$null
@@ -126,7 +133,7 @@ if ([version]$v -lt [version]'8.3') {
   Write-Host '  Borra C:\php, deja el ZIP correcto y repite este script.' -ForegroundColor Red
   exit 1
 }
-$faltan = @('curl','fileinfo','gd','intl','mbstring','mysqli','openssl','soap','sodium','zip','Zend OPcache') | Where-Object { $cargadas -notcontains $_ }
+$faltan = @('curl','fileinfo','gd','intl','mbstring','exif','mysqli','openssl','soap','sodium','zip','Zend OPcache') | Where-Object { $cargadas -notcontains $_ }
 if ($faltan) { Write-Host "  Faltan extensiones: $($faltan -join ', ')" -ForegroundColor Red }
 else { Write-Host '  OK: PHP 8.3 con todas las extensiones que pide Moodle.' -ForegroundColor Green }
 

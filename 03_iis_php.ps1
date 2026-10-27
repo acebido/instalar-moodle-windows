@@ -21,23 +21,28 @@ $appcmd = "$env:windir\system32\inetsrv\appcmd.exe"; $php = 'C:\php\php-cgi.exe'
 function Orden([string[]]$a) { $o = & $appcmd @a 2>&1; Write-Host ('  ' + ($o -join ' ')) }
 
 Write-Host '== 1. PHP como aplicación FastCGI (con los tiempos ampliados) ==' -ForegroundColor Cyan
+Write-Host '   Registra php-cgi.exe en IIS y amplía los tiempos para que la instalación de Moodle no se corte.' -ForegroundColor Gray
 & $appcmd set config /section:system.webServer/fastCgi "/-[fullPath='$php']" 2>&1 | Out-Null
 Orden @('set','config','/section:system.webServer/fastCgi',
   "/+[fullPath='$php',maxInstances='4',idleTimeout='600',activityTimeout='600',requestTimeout='3600',instanceMaxRequests='10000',monitorChangesTo='C:\php\php.ini']")
 
 Write-Host '== 2. Los ficheros .php van a PHP ==' -ForegroundColor Cyan
+Write-Host '   Indica a IIS que los ficheros .php los tiene que ejecutar PHP.' -ForegroundColor Gray
 & $appcmd set config /section:system.webServer/handlers "/-[name='PHP_via_FastCGI']" 2>&1 | Out-Null
 Orden @('set','config','/section:system.webServer/handlers',
   "/+[name='PHP_via_FastCGI',path='*.php',verb='GET,HEAD,POST,PUT,DELETE,OPTIONS',modules='FastCgiModule',scriptProcessor='$php',resourceType='Either',requireAccess='Script']")
 
 Write-Host '== 3. index.php como página por defecto ==' -ForegroundColor Cyan
+Write-Host '   Al entrar en una carpeta, IIS abrirá index.php.' -ForegroundColor Gray
 & $appcmd set config /section:system.webServer/defaultDocument "/-files.[value='index.php']" 2>&1 | Out-Null
 Orden @('set','config','/section:system.webServer/defaultDocument',"/+files.[value='index.php']")
 
 Write-Host '== 4. Subidas de hasta 256 MB (IIS corta a 30 MB de fábrica) ==' -ForegroundColor Cyan
+Write-Host '   Permite subir ficheros grandes: copias de cursos, vídeos, SCORM...' -ForegroundColor Gray
 Orden @('set','config','/section:system.webServer/security/requestFiltering','/requestLimits.maxAllowedContentLength:268435456')
 
 Write-Host '== Comprobación ==' -ForegroundColor Cyan
+Write-Host '   Crea una página de prueba de PHP, la abre y la borra.' -ForegroundColor Gray
 Set-Content -Path 'C:\inetpub\wwwroot\info.php' -Value '<?php phpinfo();' -Encoding Ascii
 iisreset /restart | Out-Null; Start-Sleep -Seconds 3
 try {

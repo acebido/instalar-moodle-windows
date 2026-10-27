@@ -38,6 +38,7 @@ $BUSCA = @($INST, $PSScriptRoot, (Join-Path $HOME 'Downloads')) |
 
 if (-not $YA) {
 Write-Host '== 1. MariaDB en C:\mariadb ==' -ForegroundColor Cyan
+Write-Host '   Descomprime MariaDB en C:\mariadb (si ya está instalada, la deja como está).' -ForegroundColor Gray
 if (-not (Test-Path "$HOME_\bin\mysqld.exe")) {
   # La carpeta descomprimida a veces trae otra carpeta igual dentro: busco la que tiene bin\mysqld.exe
   # Moodle 5.3 pide MariaDB 11.4 o superior: acepto 11.4, 11.8, 12.x...
@@ -59,10 +60,12 @@ if (-not (Test-Path "$HOME_\bin\mysqld.exe")) {
 }
 
 Write-Host '== 2. Inicializar los datos y registrar el servicio ==' -ForegroundColor Cyan
+Write-Host '   Crea las bases de datos internas, pone la contraseña de root y registra MariaDB como servicio de Windows.' -ForegroundColor Gray
 & "$HOME_\bin\mariadb-install-db.exe" --datadir="$DATA" --service=MariaDB --password="$ROOTPW" --port=3306 2>&1 |
   ForEach-Object { Write-Host "  $_" }
 
 Write-Host '== 3. my.ini que lee el servicio (con skip_ssl) ==' -ForegroundColor Cyan
+Write-Host '   Escribe la configuración de MariaDB: juego de caracteres de Moodle y sin SSL en local.' -ForegroundColor Gray
 @"
 [mysqld]
 datadir=C:/mariadb/data
@@ -84,6 +87,7 @@ skip-ssl
 Write-Host '  escrito C:\mariadb\data\my.ini'
 
 Write-Host '== 4. Arrancar el servicio ==' -ForegroundColor Cyan
+Write-Host '   Pone MariaDB en marcha y hace que arranque sola con Windows.' -ForegroundColor Gray
 Set-Service MariaDB -StartupType Automatic
 Restart-Service MariaDB -Force -ErrorAction SilentlyContinue
 for ($i=0; $i -lt 30 -and (Get-Service MariaDB).Status -ne 'Running'; $i++) { Start-Sleep 2 }
@@ -94,6 +98,7 @@ Write-Host '  MariaDB en marcha'
 }
 
 Write-Host '== 5. Base de datos «moodle» y usuario «moodleuser» ==' -ForegroundColor Cyan
+Write-Host '   Crea la base de datos de Moodle y el usuario con el que Moodle se conectará.' -ForegroundColor Gray
 # En SQL hay que escapar la barra invertida ANTES que la comilla, o se escapa dos veces.
 $PW = $DBPW -replace '\\','\\' -replace "'","''"
 # CREATE OR REPLACE, no IF NOT EXISTS: si el usuario ya existía, «IF NOT EXISTS» se
@@ -107,6 +112,7 @@ FLUSH PRIVILEGES;
 $sql | & "$HOME_\bin\mariadb.exe" -u root "-p$ROOTPW" 2>&1 | ForEach-Object { Write-Host "  $_" }
 
 Write-Host '== Comprobación ==' -ForegroundColor Cyan
+Write-Host '   Entra en MariaDB con moodleuser para confirmar que la contraseña funciona.' -ForegroundColor Gray
 $r = & "$HOME_\bin\mariadb.exe" -u moodleuser "-p$DBPW" -N -e "SELECT @@version, @@character_set_database FROM dual" moodle 2>&1
 if ($LASTEXITCODE -eq 0) { Write-Host "  OK: moodleuser entra en la base de datos moodle ($r)" -ForegroundColor Green }
 else {
