@@ -8,7 +8,8 @@
 #   3. Para el «Default Web Site» y crea el sitio «Moodle» apuntando a
 #      C:\moodle\PUBLIC. En Moodle 5 se publica solo la carpeta public.
 #   4. Instala con Composer las librerías que el ZIP de Moodle no trae (desde 5.1).
-#   5. Hace que IIS mande al «router» de Moodle (r.php) las direcciones nuevas.
+#   5. Hace que IIS mande al «router» de Moodle (r.php) las direcciones nuevas y
+#      bloquea los ficheros internos que no deben verse desde la web.
 #
 #  Cómo se ejecuta: PowerShell COMO ADMINISTRADOR, en esta carpeta:  .\05_moodle.ps1
 # =============================================================================
@@ -84,10 +85,12 @@ else {
   else { Write-Host '  No se han instalado las librerías: mira los mensajes de arriba.' -ForegroundColor Red; exit 1 }
 }
 
-Write-Host '== 5. Router de Moodle en IIS ==' -ForegroundColor Cyan
-Write-Host '   Las direcciones que no son un fichero (las nuevas de Moodle 5) se pasan a r.php.' -ForegroundColor Gray
+Write-Host '== 5. Router de Moodle y ficheros internos en IIS ==' -ForegroundColor Cyan
+Write-Host '   Las direcciones nuevas de Moodle 5 se pasan a r.php y se bloquean los ficheros internos (readme, install.xml...).' -ForegroundColor Gray
 # Sin instalar el módulo URL Rewrite: cuando IIS no encuentra algo (error 404),
 # ejecuta /r.php, que decide si es una página de Moodle o un 404 de verdad.
+# denyUrlSequences: lo mismo que Moodle pide bloquear en Apache y nginx (ficheros que
+# no deben verse desde la web). Sin esto, la comprobación «rutas públicas» sale en rojo.
 @'
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
@@ -96,6 +99,23 @@ Write-Host '   Las direcciones que no son un fichero (las nuevas de Moodle 5) se
       <remove statusCode="404" subStatusCode="-1" />
       <error statusCode="404" path="/r.php" responseMode="ExecuteURL" />
     </httpErrors>
+    <security>
+      <requestFiltering>
+        <denyUrlSequences>
+          <add sequence="environment.xml" />
+          <add sequence="/db/install.xml" />
+          <add sequence="readme" />
+          <add sequence="upgrade.txt" />
+          <add sequence="UPGRADING" />
+          <add sequence="/fixtures/" />
+          <add sequence="/behat/" />
+          <add sequence="/tests/" />
+          <add sequence="phpunit.xml" />
+          <add sequence="composer.json" />
+          <add sequence="composer.lock" />
+        </denyUrlSequences>
+      </requestFiltering>
+    </security>
   </system.webServer>
 </configuration>
 '@ | Set-Content -Path "$CODE\public\web.config" -Encoding UTF8

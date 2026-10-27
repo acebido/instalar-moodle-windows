@@ -62,6 +62,18 @@ tabla son el mínimo, no una preferencia. Con PHP 8.2 el instalador se para.
 
 5. Abre **http://localhost** y entra con el usuario `admin`.
 
+### O todo de una vez
+
+En vez del punto 4, escribe solo:
+
+```powershell
+.\instalar_todo.ps1
+```
+
+Te pregunta **al principio** todos los datos (contraseñas de root, moodleuser y admin —cada
+una dos veces—, nombre del campus y correo) y ejecuta del 00 al 06 seguidos, sin volver a
+preguntar. Si uno falla, se para y te dice cuál. Tarda unos 10-30 minutos según el ordenador.
+
 > ¿Prefieres el instalador del navegador? Después de terminarlo en http://localhost, ejecuta
 > igualmente `.\06_instalar_moodle.ps1`: al ver que Moodle ya está instalado, solo hace los
 > ajustes finales (router y cron).
@@ -91,7 +103,9 @@ no pases al siguiente.
    web oficial, comprueba su firma y las instala.
 5. **Moodle 5 necesita un «router».** Las direcciones nuevas (que no son un fichero) tienen que
    llegar a `r.php`. El script 05 lo resuelve con un `web.config` en `C:\moodle\public`, sin
-   instalar el módulo URL Rewrite de IIS, y el 06 lo indica en `config.php`.
+   instalar el módulo URL Rewrite de IIS, y el 06 lo indica en `config.php`. En ese mismo
+   `web.config` se bloquean los ficheros internos (`readme`, `install.xml`, `upgrade.txt`…)
+   que Moodle pide no publicar.
 6. **Sin cron, Moodle no envía correos ni hace sus tareas.** El script 06 crea la tarea
    programada «Moodle cron», que se ejecuta cada minuto.
 

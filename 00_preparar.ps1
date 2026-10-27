@@ -28,7 +28,8 @@ $PIEZAS = @(
   @{ nombre = 'PHP 8.3 o superior (Non Thread Safe, x64)'
      filtro = { $_.Name -like 'php-8.*' -and $_.Name -match 'nts' -and $_.Name -match 'x64' -and
                 ($_.Name -match '^php-8\.(\d+)') -and [int]$Matches[1] -ge 3 }
-     web    = 'downloads.php.net/~windows/releases/archives/' }
+     web    = 'downloads.php.net/~windows/releases/archives/'
+     opcional = $true }   # 27-10-2026: si no está, el 02 descarga el PHP 8.3 más nuevo
   @{ nombre = 'MariaDB 11.4 o superior (ZIP para Windows x64)'
      filtro = { $_.Name -like 'mariadb-*' -and $_.Name -match 'winx64' -and
                 ($_.Name -match 'mariadb-(\d+)\.(\d+)') -and
@@ -77,8 +78,7 @@ Write-Host '   Lista lo que hay en C:\instaladores y avisa de lo que falte.' -Fo
 Get-ChildItem $INST -File | ForEach-Object { Write-Host ("  {0,10:N1} MB  {1}" -f ($_.Length/1MB), $_.Name) }
 if ($faltan) {
   Write-Host ''
-  Write-Host "  Faltan $($faltan.Count) cosa(s). El PHP lo descarga el script 02 si no está," -ForegroundColor Yellow
-  Write-Host '  pero MariaDB y Moodle los tienes que bajar tú.' -ForegroundColor Yellow
+  Write-Host "  Faltan $($faltan.Count) cosa(s): MariaDB y Moodle los tienes que bajar tú (PHP y Visual C++ los baja el 02)." -ForegroundColor Yellow
 } else {
   Write-Host '  OK: lo tienes todo. Sigue con .\01_iis.ps1' -ForegroundColor Green
 }

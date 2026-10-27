@@ -22,12 +22,15 @@ if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
 $YA = [bool](Get-Service MariaDB -ErrorAction SilentlyContinue)
 if ($YA) { Write-Host 'MariaDB ya está instalada: solo rehago la base de datos «moodle» y el usuario «moodleuser».' -ForegroundColor Yellow }
 
-function Clave($texto) {
+# Si se lanza desde instalar_todo.ps1, los datos ya vienen preguntados (variables MOODLE_*)
+# y aquí no se vuelven a pedir. Ejecutado solo, pregunta como siempre.
+function Clave($texto, $var) {
+  $v = [Environment]::GetEnvironmentVariable($var); if ($v) { return $v }
   $s = Read-Host $texto -AsSecureString
   [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($s)) }
-if ($YA) { $ROOTPW = Clave 'Contraseña ACTUAL de root de MariaDB' }
-else     { $ROOTPW = Clave 'Contraseña NUEVA para root de MariaDB' }
-$DBPW   = Clave 'Contraseña NUEVA para moodleuser (la usará Moodle, apúntala)'
+if ($YA) { $ROOTPW = Clave 'Contraseña ACTUAL de root de MariaDB' 'MOODLE_ROOTPW' }
+else     { $ROOTPW = Clave 'Contraseña NUEVA para root de MariaDB' 'MOODLE_ROOTPW' }
+$DBPW   = Clave 'Contraseña NUEVA para moodleuser (la usará Moodle, apúntala)' 'MOODLE_DBPW'
 if (-not $ROOTPW -or -not $DBPW) { Write-Host 'Las contraseñas no pueden estar vacías.' -ForegroundColor Red; exit 1 }
 
 $INST = 'C:\instaladores'; $HOME_ = 'C:\mariadb'; $DATA = 'C:\mariadb\data'

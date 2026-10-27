@@ -29,14 +29,20 @@ if ($YA) {
 }
 
 if (-not $YA) {
-function Clave($texto) {
+# Si se lanza desde instalar_todo.ps1, los datos ya vienen preguntados (variables MOODLE_*)
+# y aquí no se vuelven a pedir. Ejecutado solo, pregunta como siempre.
+function Clave($texto, $var) {
+  $v = [Environment]::GetEnvironmentVariable($var); if ($v) { return $v }
   $s = Read-Host $texto -AsSecureString
   [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($s)) }
-$DBPW    = Clave 'Contraseña de moodleuser (la del script 04)'
-$NOMBRE  = Read-Host 'Nombre del campus (por ejemplo: Campus de pruebas)'
-$CORTO   = Read-Host 'Nombre corto (por ejemplo: PRUEBAS)'
-$ADMINPW = Clave 'Contraseña NUEVA para el administrador de Moodle (8+ caracteres, mayúscula, número y símbolo)'
-$CORREO  = Read-Host 'Correo del administrador'
+function Dato($texto, $var) {
+  $v = [Environment]::GetEnvironmentVariable($var); if ($v) { return $v }
+  Read-Host $texto }
+$DBPW    = Clave 'Contraseña de moodleuser (la del script 04)' 'MOODLE_DBPW'
+$NOMBRE  = Dato  'Nombre del campus (por ejemplo: Campus de pruebas)' 'MOODLE_NOMBRE'
+$CORTO   = Dato  'Nombre corto (por ejemplo: PRUEBAS)' 'MOODLE_CORTO'
+$ADMINPW = Clave 'Contraseña NUEVA para el administrador de Moodle (8+ caracteres, mayúscula, número y símbolo)' 'MOODLE_ADMINPW'
+$CORREO  = Dato  'Correo del administrador' 'MOODLE_CORREO'
 
 # El instalador necesita OPENSSL_CONF para crear las claves de LTI. Si abriste esta
 # consola antes de ejecutar el script 02, la variable todavía no está puesta aquí.
@@ -45,6 +51,7 @@ if (-not $env:OPENSSL_CONF -and (Test-Path 'C:\php\extras\ssl\openssl.cnf')) {
 
 Write-Host '== Instalando Moodle (varios minutos, no cierres la ventana) ==' -ForegroundColor Cyan
 Write-Host '   Crea config.php, las tablas de la base de datos y el usuario administrador.' -ForegroundColor Gray
+Write-Host '   Tras el último «++ Éxito ++» sigue trabajando 1-2 minutos sin escribir nada: espera.' -ForegroundColor Gray
 # PHP escribe avisos por la salida de errores; con ErrorActionPreference = Stop,
 # PowerShell los tomaría por un fallo y cortaría la instalación a medias.
 $ErrorActionPreference = 'Continue'
