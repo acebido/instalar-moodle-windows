@@ -7,6 +7,8 @@ MariaDB 11.4 y Moodle 5.3, **sin XAMPP**.
 > Son para un **ordenador de pruebas o de prácticas**. Para un servidor en internet hacen
 > falta además HTTPS, copias de seguridad y una configuración de seguridad más estricta.
 
+**Guías en PDF:** [guía breve (2 páginas)](Guia-breve-Moodle-Windows-scripts.pdf) · [guía completa, con los fallos más habituales](Instalar-Moodle-Windows11-con-scripts.pdf)
+
 ## Antes de empezar
 
 1. Windows 11 (o Windows 10/Server) de 64 bits y una cuenta de **administrador**.
