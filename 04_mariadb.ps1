@@ -3,8 +3,8 @@
 #  Instalar Moodle 5.3 en Windows 11, pieza a pieza — Acebido · José Luis Díaz
 # =============================================================================
 #  Qué hace:
-#   1. Pone MariaDB 11.4 en C:\mariadb (desde C:\instaladores: carpeta ya
-#      descomprimida, el ZIP, o lo descarga).
+#   1. Pone MariaDB 11.4 en C:\mariadb (desde C:\instaladores, Descargas o junto a
+#      los scripts: carpeta ya descomprimida o el ZIP, que tienes que bajar tú).
 #   2. Inicializa los datos y registra el servicio «MariaDB».
 #   3. Escribe C:\mariadb\data\my.ini, que es el que lee el servicio, con
 #      utf8mb4 y skip_ssl. SIN skip_ssl, MariaDB 11.4 NO ARRANCA en un ordenador
@@ -12,6 +12,7 @@
 #   4. Crea la base de datos «moodle» y el usuario «moodleuser».
 #
 #  Te pedirá dos contraseñas: la de root de MariaDB y la de moodleuser. APÚNTALAS.
+#  (Si lo lanza instalar_todo.ps1, ya las ha preguntado él y aquí no se piden.)
 #  Cómo se ejecuta: PowerShell COMO ADMINISTRADOR, en esta carpeta:  .\04_mariadb.ps1
 # =============================================================================
 $ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue'

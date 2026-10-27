@@ -6,4 +6,4 @@ REM ============================================================================
 REM  Doble clic aqui: no hay que escribir ni copiar ninguna ruta. Deja los
 REM  scripts desbloqueados y permitidos solo en esa ventana.
 REM =============================================================================
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process powershell -Verb RunAs -ArgumentList '-NoExit -ExecutionPolicy Bypass -Command \"Set-Location ''%~dp0''; Unblock-File *.ps1; Write-Host ''Listo. Empieza con .\00_preparar.ps1'' -ForegroundColor Green\"'"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process powershell -Verb RunAs -ArgumentList '-NoExit -ExecutionPolicy Bypass -Command \"Set-Location ''%~dp0''; Unblock-File *.ps1; Write-Host ''Listo. Empieza con .\00_preparar.ps1 (o todo de una vez: .\instalar_todo.ps1)'' -ForegroundColor Green\"'"

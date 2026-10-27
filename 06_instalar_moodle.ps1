@@ -5,12 +5,13 @@
 #  Qué hace: lo mismo que el instalador de http://localhost, pero con una sola
 #  orden: crea config.php y las ~500 tablas, y el usuario administrador.
 #  Por consola no hay ningún servidor web que corte a mitad.
-#  Al final borra el info.php de prueba que dejó el script 03, avisa a Moodle de que
+#  Al final comprueba que no quede el info.php de prueba del script 03, avisa a Moodle de que
 #  el router está configurado (script 05) y programa el cron cada minuto.
 #  Si ya instalaste Moodle desde el navegador, ejecútalo igual: solo hará esto último.
 #
 #  Te pedirá: la contraseña de moodleuser (la del script 04), el nombre del
 #  campus y la contraseña y el correo del administrador de Moodle.
+#  (Si lo lanza instalar_todo.ps1, ya los ha preguntado él y aquí no se piden.)
 #  Cómo se ejecuta: PowerShell COMO ADMINISTRADOR, en esta carpeta:  .\06_instalar_moodle.ps1
 # =============================================================================
 $ErrorActionPreference = 'Stop'
@@ -66,7 +67,7 @@ $ErrorActionPreference = 'Stop'
 }
 
 Write-Host '== Limpieza ==' -ForegroundColor Cyan
-Write-Host '   Borra la página de prueba de PHP, que enseña datos del servidor.' -ForegroundColor Gray
+Write-Host '   Comprueba que no quede la página de prueba de PHP, que enseña datos del servidor.' -ForegroundColor Gray
 # info.php lo dejó el script 03 para comprobar que IIS y PHP se entendían.
 # Ya no hace falta y enseña la configuración del servidor: se borra.
 if (Test-Path 'C:\inetpub\wwwroot\info.php') {
