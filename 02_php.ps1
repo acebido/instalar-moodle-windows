@@ -104,8 +104,23 @@ foreach ($k in $valores.Keys) {
   $re = '(?m)^;?\s*' + [regex]::Escape($k) + '\s*=.*$'
   if ($ini -match $re) { $ini = $ini -replace $re, "$k = $($valores[$k])" } else { $ini += "`r`n$k = $($valores[$k])" } }
 $ini += "`r`n; --- OPcache (Moodle lo recomienda) ---`r`nzend_extension=opcache`r`nopcache.enable=1`r`nopcache.enable_cli=1`r`nopcache.memory_consumption=256`r`nopcache.max_accelerated_files=12000`r`nopcache.revalidate_freq=60`r`n"
-Set-Content -Path "$DEST\php.ini" -Value $ini -Encoding Ascii
+# Si IIS ya está sirviendo PHP, los php-cgi.exe tienen php.ini abierto y escribir
+# encima falla («No se puede leer la secuencia») y puede dejarlo vacío. Por eso:
+# parar IIS, copia de seguridad, escribir en un fichero aparte y copiarlo encima.
+$iis = Get-Service W3SVC -EA SilentlyContinue
+$iisEnMarcha = $iis -and $iis.Status -eq 'Running'
+if ($iisEnMarcha) { Write-Host '  paro IIS un momento para poder cambiar php.ini'; Stop-Service W3SVC -Force }
+Get-Process php-cgi -EA SilentlyContinue | Stop-Process -Force
+Start-Sleep -Seconds 1
+if ((Test-Path "$DEST\php.ini") -and (Get-Item "$DEST\php.ini").Length -gt 0) {
+  Copy-Item "$DEST\php.ini" "$DEST\php.ini.antes-$(Get-Date -Format yyyyMMdd-HHmmss)" -Force }
+$tmp = "$DEST\php.ini.nuevo"
+[IO.File]::WriteAllText($tmp, $ini, [Text.Encoding]::ASCII)
+Copy-Item $tmp "$DEST\php.ini" -Force
+Remove-Item $tmp -Force
+if ((Get-Item "$DEST\php.ini").Length -lt 1000) { Write-Host '  php.ini ha quedado vacío: algo lo tiene bloqueado.' -ForegroundColor Red; exit 1 }
 Write-Host '  escrito C:\php\php.ini'
+if ($iisEnMarcha) { Start-Service W3SVC; Write-Host '  IIS en marcha otra vez' }
 
 Write-Host '== 4. C:\php en el PATH ==' -ForegroundColor Cyan
 Write-Host '   Así se puede escribir «php» desde cualquier carpeta.' -ForegroundColor Gray

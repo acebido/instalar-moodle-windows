@@ -34,7 +34,18 @@ Start-Service W3SVC -ErrorAction SilentlyContinue
 
 Write-Host '== Comprobación ==' -ForegroundColor Cyan
 Write-Host '   Abre http://localhost: si responde, IIS ya funciona.' -ForegroundColor Gray
+# Si ya se ejecutó el 03, la web apunta a Moodle y no a la página azul de IIS:
+# entonces lo que responde (o se cuelga) es PHP/Moodle, no IIS.
+try { $raiz = & "$env:windir\system32\inetsrv\appcmd.exe" list vdir "Default Web Site/" /text:physicalPath
+      if ($raiz -like 'ERROR*') { $raiz = $null } } catch { $raiz = $null }
+$deIIS = (-not $raiz) -or ($raiz -like '*inetpub\wwwroot*')
 try {
-  $r = Invoke-WebRequest -Uri http://localhost/ -UseBasicParsing -TimeoutSec 15
-  Write-Host "  OK: http://localhost responde (HTTP $($r.StatusCode)). Ábrelo en el navegador: sale la página azul de IIS." -ForegroundColor Green
-} catch { Write-Host "  http://localhost no responde: $($_.Exception.Message)" -ForegroundColor Red }
+  $r = Invoke-WebRequest -Uri http://localhost/ -UseBasicParsing -TimeoutSec 30
+  if ($deIIS) { Write-Host "  OK: http://localhost responde (HTTP $($r.StatusCode)). Ábrelo en el navegador: sale la página azul de IIS." -ForegroundColor Green }
+  else { Write-Host "  OK: IIS responde (HTTP $($r.StatusCode)); la web ya apunta a $raiz" -ForegroundColor Green }
+} catch {
+  if (-not $deIIS -and (Get-Service W3SVC).Status -eq 'Running') {
+    Write-Host "  IIS está en marcha, pero la web ya apunta a $raiz (Moodle) y esa página no contesta." -ForegroundColor Yellow
+    Write-Host '  No es cosa de IIS: sigue con el 02, que revisa PHP.' -ForegroundColor Yellow
+  } else { Write-Host "  http://localhost no responde: $($_.Exception.Message)" -ForegroundColor Red }
+}
