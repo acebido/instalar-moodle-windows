@@ -43,11 +43,21 @@ Orden @('set','config','/section:system.webServer/security/requestFiltering','/r
 
 Write-Host '== Comprobación ==' -ForegroundColor Cyan
 Write-Host '   Crea una página de prueba de PHP, la abre y la borra.' -ForegroundColor Gray
-Set-Content -Path 'C:\inetpub\wwwroot\info.php' -Value '<?php phpinfo();' -Encoding Ascii
+# La página va a la carpeta del sitio que contesta en el puerto 80: la de ejemplo
+# de IIS o, si ya se ejecutó el 05, la del sitio «Moodle» (C:\moodle\public).
+$raiz = 'C:\inetpub\wwwroot'
+try {
+  $sitios = ([xml](& $appcmd list site /state:Started /xml)).appcmd.SITE
+  $s80 = @($sitios | Where-Object { $_.bindings -match ':80:' })[0]
+  if ($s80) { $p = & $appcmd list vdir "$($s80.'SITE.NAME')/" /text:physicalPath
+              if ($p -and $p -notlike 'ERROR*') { $raiz = [Environment]::ExpandEnvironmentVariables($p) } }
+} catch { }
+$info = Join-Path $raiz 'info.php'
+Set-Content -Path $info -Value '<?php phpinfo();' -Encoding Ascii
 iisreset /restart | Out-Null; Start-Sleep -Seconds 3
 try {
   $r = Invoke-WebRequest -Uri http://localhost/info.php -UseBasicParsing -TimeoutSec 20
   $v = ([regex]::Match($r.Content, 'PHP Version\s*</td><td class="v">([^<]+)')).Groups[1].Value
   Write-Host "  OK: IIS ejecuta PHP $v" -ForegroundColor Green
 } catch { Write-Host "  IIS no ejecuta PHP: $($_.Exception.Message)" -ForegroundColor Red }
-finally { Remove-Item 'C:\inetpub\wwwroot\info.php' -ErrorAction SilentlyContinue }   # phpinfo enseña demasiado: se borra
+finally { Remove-Item $info -ErrorAction SilentlyContinue }   # phpinfo enseña demasiado: se borra

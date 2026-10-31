@@ -36,8 +36,13 @@ Write-Host '== Comprobación ==' -ForegroundColor Cyan
 Write-Host '   Abre http://localhost: si responde, IIS ya funciona.' -ForegroundColor Gray
 # Si ya se ejecutó el 03, la web apunta a Moodle y no a la página azul de IIS:
 # entonces lo que responde (o se cuelga) es PHP/Moodle, no IIS.
-try { $raiz = & "$env:windir\system32\inetsrv\appcmd.exe" list vdir "Default Web Site/" /text:physicalPath
-      if ($raiz -like 'ERROR*') { $raiz = $null } } catch { $raiz = $null }
+$appcmd = "$env:windir\system32\inetsrv\appcmd.exe"; $raiz = $null
+try {
+  $sitios = ([xml](& $appcmd list site /state:Started /xml)).appcmd.SITE
+  $s80 = @($sitios | Where-Object { $_.bindings -match ':80:' })[0]
+  if ($s80) { $raiz = & $appcmd list vdir "$($s80.'SITE.NAME')/" /text:physicalPath
+              if ($raiz -like 'ERROR*') { $raiz = $null } }
+} catch { $raiz = $null }
 $deIIS = (-not $raiz) -or ($raiz -like '*inetpub\wwwroot*')
 try {
   $r = Invoke-WebRequest -Uri http://localhost/ -UseBasicParsing -TimeoutSec 30
