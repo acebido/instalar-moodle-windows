@@ -9,9 +9,9 @@ MariaDB 11.4 y Moodle 5.3, **sin XAMPP**.
 
 ## 🎬 Mira el vídeo
 
-[![Instalar Moodle 5.3 en Windows 11 paso a paso](https://img.youtube.com/vi/7kT0wYRl7mU/hqdefault.jpg)](https://youtu.be/7kT0wYRl7mU)
+[![Instalar Moodle 5.3 en Windows 11 paso a paso](https://img.youtube.com/vi/JrEgOQQTdE8/hqdefault.jpg)](https://youtu.be/JrEgOQQTdE8)
 
-**▶️ https://youtu.be/7kT0wYRl7mU** — el vídeo completo (36 min), con capítulos para cada script.
+**▶️ https://youtu.be/JrEgOQQTdE8** — el vídeo completo (35 min), con capítulos para cada script.
 
 **Guías en PDF:** [guía breve (2 páginas)](Guia-breve-Moodle-Windows-scripts.pdf) · [guía completa, con los fallos más habituales](Instalar-Moodle-Windows11-con-scripts.pdf)
 
