@@ -9,8 +9,8 @@
 #  el router está configurado (script 05) y programa el cron cada minuto.
 #  Si ya instalaste Moodle desde el navegador, ejecútalo igual: solo hará esto último.
 #
-#  Te pedirá: la contraseña de moodleuser (la del script 04), el nombre del
-#  campus y la contraseña y el correo del administrador de Moodle.
+#  Te pedirá: la contraseña de moodleuser (la del script 04, y comprueba que es la buena),
+#  el nombre del campus, la contraseña del administrador de Moodle (dos veces) y su correo.
 #  (Si lo lanza instalar_todo.ps1, ya los ha preguntado él y aquí no se piden.)
 #  Cómo se ejecuta: PowerShell COMO ADMINISTRADOR, en esta carpeta:  .\06_instalar_moodle.ps1
 # =============================================================================
@@ -39,10 +39,32 @@ function Clave($texto, $var) {
 function Dato($texto, $var) {
   $v = [Environment]::GetEnvironmentVariable($var); if ($v) { return $v }
   Read-Host $texto }
-$DBPW    = Clave 'Contraseña de moodleuser (la del script 04)' 'MOODLE_DBPW'
+# La de moodleuser se prueba contra MariaDB antes de seguir: si está mal escrita, la instalación
+# fallaría con «Access denied» después de preguntarlo todo.
+while ($true) {
+  $DBPW = Clave 'Contraseña de moodleuser (la del script 04)' 'MOODLE_DBPW'
+  $ErrorActionPreference = 'Continue'
+  & C:\mariadb\bin\mariadb.exe -u moodleuser "--password=$DBPW" -e 'SELECT 1' moodle 2>&1 | Out-Null
+  $ok = $LASTEXITCODE -eq 0
+  $ErrorActionPreference = 'Stop'
+  if ($ok) { break }
+  Write-Host '  MariaDB no acepta esa contraseña para moodleuser: vuelve a escribirla.' -ForegroundColor Yellow
+  if ($env:MOODLE_DBPW) { exit 1 }
+}
 $NOMBRE  = Dato  'Nombre del campus (por ejemplo: Campus de pruebas)' 'MOODLE_NOMBRE'
 $CORTO   = Dato  'Nombre corto (por ejemplo: PRUEBAS)' 'MOODLE_CORTO'
-$ADMINPW = Clave 'Contraseña NUEVA para el administrador de Moodle (8+ caracteres, mayúscula, número y símbolo)' 'MOODLE_ADMINPW'
+# La del administrador no se ve al escribirla: se pide dos veces y se comprueba que Moodle la aceptará.
+# Las comillas " no: PowerShell 5 las pierde al pasársela a PHP y la contraseña guardada sería otra.
+$ADMINPW = [Environment]::GetEnvironmentVariable('MOODLE_ADMINPW')
+while (-not $ADMINPW) {
+  $a = Clave 'Contraseña NUEVA para el administrador de Moodle (8+ caracteres, mayúscula, minúscula, número y símbolo)' 'MOODLE_NINGUNA'
+  $b = Clave '  Repítela' 'MOODLE_NINGUNA'
+  if ($a -cne $b) { Write-Host '  No coinciden: vuelve a escribirla.' -ForegroundColor Yellow; continue }
+  if ($a.Contains('"')) { Write-Host '  Sin comillas ("): elige otro símbolo, por ejemplo * . - _ # @' -ForegroundColor Yellow; continue }
+  if (-not ($a.Length -ge 8 -and $a -cmatch '[A-Z]' -and $a -cmatch '[a-z]' -and $a -match '\d' -and $a -match '[^A-Za-z0-9]')) {
+    Write-Host '  Moodle no la aceptaría: 8 o más caracteres, con mayúscula, minúscula, número y símbolo.' -ForegroundColor Yellow; continue }
+  $ADMINPW = $a
+}
 $CORREO  = Dato  'Correo del administrador' 'MOODLE_CORREO'
 
 # El instalador necesita OPENSSL_CONF para crear las claves de LTI. Si abriste esta

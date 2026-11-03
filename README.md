@@ -20,7 +20,8 @@ MariaDB 11.4 y Moodle 5.3, **sin XAMPP**.
 1. Windows 11 (o Windows 10/Server) de 64 bits y una cuenta de **administrador**.
 2. Unos 10 GB libres en el disco y **conexión a internet** (el script 05 descarga Composer y
    las librerías que necesita Moodle).
-3. Que nada ocupe los puertos **80** y **3306** (otro servidor web, XAMPP, otra base de datos…).
+3. Que nada ocupe los puertos **80** y **3306** (otro servidor web, XAMPP, otra base de datos…). No hace falta
+   comprobarlo a mano: el primer script, `00_preparar.ps1`, lo mira y te dice qué programa los ocupa.
 4. Descarga los ZIP de la tabla. **Da igual en qué carpeta acaben**: el primer script,
    `00_preparar.ps1`, los busca en Descargas, Escritorio, Documentos y junto a los propios
    scripts, y los deja todos juntos en `C:\instaladores`, que es donde los demás los buscan.
@@ -58,7 +59,7 @@ tabla son el mínimo, no una preferencia. Con PHP 8.2 el instalador se para.
 
    | Script | Qué hace | Te pide |
    |---|---|---|
-   | `.\00_preparar.ps1` | Recoge los ZIP y los deja en `C:\instaladores` | — |
+   | `.\00_preparar.ps1` | Recoge los ZIP y los deja en `C:\instaladores`, y comprueba que los puertos 80 y 3306 están libres | — |
    | `.\01_iis.ps1` | Activa IIS y CGI | — |
    | `.\02_php.ps1` | PHP 8.3 en `C:\php` con su `php.ini` | — |
    | `.\03_iis_php.ps1` | Une IIS y PHP (FastCGI) con tiempos ampliados | — |
