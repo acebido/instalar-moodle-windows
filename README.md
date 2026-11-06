@@ -1,7 +1,7 @@
 ﻿# Instalar Moodle 5.3 en Windows 11 — scripts de PowerShell
 
-Scripts del vídeo **«Instalar Moodle 5.3 en Windows 11, pieza a pieza»** del canal de Acebido
-(José Luis Díaz). Hacen, en orden, lo mismo que se ve en el vídeo: IIS, PHP 8.3,
+Scripts del vídeo **[«Cómo instalar Moodle 5.3 sobre Windows 11 a través de scripts»](https://youtu.be/sbFuGd2EJq8)**
+del canal de Acebido (José Luis Díaz). Hacen, en orden, lo mismo que se ve en el vídeo: IIS, PHP 8.3,
 MariaDB 11.4 y Moodle 5.3, **sin XAMPP**.
 
 > Son para un **ordenador de pruebas o de prácticas**. Para un servidor en internet hacen
