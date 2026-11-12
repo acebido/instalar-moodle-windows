@@ -6,7 +6,8 @@
 #  orden: crea config.php y las ~500 tablas, y el usuario administrador.
 #  Por consola no hay ningún servidor web que corte a mitad.
 #  Al final comprueba que no quede el info.php de prueba del script 03, avisa a Moodle de que
-#  el router está configurado (script 05) y programa el cron cada minuto.
+#  el router está configurado (script 05), le da una carpeta temporal propia (sin ella no se
+#  pueden instalar ni actualizar extensiones desde la web) y programa el cron cada minuto.
 #  Si ya instalaste Moodle desde el navegador, ejecútalo igual: solo hará esto último.
 #
 #  Te pedirá: la contraseña de moodleuser (la del script 04, y comprueba que es la buena),
@@ -108,6 +109,17 @@ else {
   $cfg = $cfg -replace "require_once\(__DIR__ \. '/lib/setup.php'\);", "`$CFG->routerconfigured = true;`r`n`r`nrequire_once(__DIR__ . '/lib/setup.php');"
   Set-Content 'C:\moodle\config.php' $cfg -NoNewline -Encoding Ascii
   Write-Host '  añadido $CFG->routerconfigured = true; a config.php' }
+
+Write-Host '== Carpeta temporal para las extensiones ==' -ForegroundColor Cyan
+Write-Host '   Da a Moodle una carpeta temporal propia en C:\moodledata, para poder instalar y actualizar extensiones desde la web.' -ForegroundColor Gray
+# Sin ella Moodle usa C:\Windows\Temp\requestdir. El cron (va como SYSTEM) crea esa carpeta primero y dentro
+# IIS ya no puede escribir: instalar una extensión desde la web falla con «... can not be created, check permissions».
+$cfg = Get-Content 'C:\moodle\config.php' -Raw
+if ($cfg -match 'localrequestdir') { Write-Host '  ya estaba en config.php' }
+else {
+  $cfg = $cfg -replace "require_once\(__DIR__ \. '/lib/setup.php'\);", "`$CFG->localrequestdir = 'C:/moodledata/localrequestdir';`r`n`r`nrequire_once(__DIR__ . '/lib/setup.php');"
+  Set-Content 'C:\moodle\config.php' $cfg -NoNewline -Encoding Ascii
+  Write-Host '  añadido $CFG->localrequestdir = C:/moodledata/localrequestdir a config.php' }
 
 Write-Host '== Cron cada minuto ==' -ForegroundColor Cyan
 Write-Host '   Tarea programada de Windows que ejecuta las tareas de Moodle: correos, avisos, limpieza...' -ForegroundColor Gray

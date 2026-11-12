@@ -61,7 +61,7 @@ tabla son el mínimo, no una preferencia. Con PHP 8.2 el instalador se para.
    | `.\03_iis_php.ps1` | Une IIS y PHP (FastCGI) con tiempos ampliados | — |
    | `.\04_mariadb.ps1` | MariaDB 11.4, base de datos `moodle` y usuario `moodleuser` | contraseñas de root y de moodleuser |
    | `.\05_moodle.ps1` | Código en `C:\moodle`, `C:\moodledata`, el sitio de IIS, las librerías de Composer y el router | — |
-   | `.\06_instalar_moodle.ps1` | Instala Moodle por consola, avisa a Moodle del router y programa el cron | contraseña de moodleuser, nombre del campus y datos del administrador |
+   | `.\06_instalar_moodle.ps1` | Instala Moodle por consola, avisa a Moodle del router, le da una carpeta temporal propia (para las extensiones) y programa el cron | contraseña de moodleuser, nombre del campus y datos del administrador |
 
 5. Abre **http://localhost** y entra con el usuario `admin`.
 
@@ -79,7 +79,7 @@ preguntar. Si uno falla, se para y te dice cuál. Tarda unos 10-30 minutos segú
 
 > ¿Prefieres el instalador del navegador? Después de terminarlo en http://localhost, ejecuta
 > igualmente `.\06_instalar_moodle.ps1`: al ver que Moodle ya está instalado, solo hace los
-> ajustes finales (router y cron).
+> ajustes finales (router, carpeta temporal y cron).
 
 Debajo de cada paso, en gris, el script explica **qué hace**. Cada uno termina con una
 **comprobación** en verde (bien) o en rojo (algo ha fallado, con el motivo). Si uno falla,
@@ -111,6 +111,13 @@ no pases al siguiente.
    que Moodle pide no publicar.
 6. **Sin cron, Moodle no envía correos ni hace sus tareas.** El script 06 crea la tarea
    programada «Moodle cron», que se ejecuta cada minuto.
+7. **Las extensiones necesitan una carpeta temporal propia.** Moodle descomprime cada extensión
+   en una carpeta temporal, y la de Windows (`C:\Windows\Temp`) no le sirve: el cron, que va
+   como SYSTEM, crea antes su subcarpeta y después IIS no puede escribir dentro. Instalar una
+   extensión desde la web fallaría con «... can not be created, check permissions». El script
+   06 pone en `config.php` una carpeta propia, `C:\moodledata\localrequestdir`. Si instalaste
+   Moodle antes del 12-11-2026, vuelve a ejecutar `.\06_instalar_moodle.ps1`: solo hace los
+   ajustes que falten.
 
 ---
 Acebido · Formación · Tecnología · Futuro — José Luis Díaz.
